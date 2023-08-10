@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>STATHAM - JSON to Table Editor</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <style>
+      /* Styles */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #2e3440;
+        color: #d8dee9;
+        padding: 20px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      #jsonContainer {
+        margin-bottom: 20px;
+      }
+
+      textarea {
+        width: 100%;
+        height: 200px;
+        padding: 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: #3b4252;
+        color: #eceff4;
+      }
+
+      button {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: #81a1c1;
+        color: #eceff4;
+        cursor: pointer;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid #4c566a;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+      }
+
+      tr:nth-child(even) {
+        background-color: #434c5e;
+      }
+
+      #topContainer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      #topContainer img {
+        max-height: 120px;
+        margin-right: 20px;
+      }
+
+      pre {
+        background-color: #4c566a;
+        padding: 20px;
+        border-radius: 5px;
+      }
+
+      /* More styles can be added as needed */
+    </style>
+  </head>
+
+  <body>
+    <div id="topContainer">
+      <img src="statham.svg" alt="Statham Logo" />
+      <pre>
+███████╗████████╗ █████╗ ████████╗██╗  ██╗ █████╗ ███╗   ███╗
+██╔════╝╚══██╔══╝██╔══██╗╚══██╔══╝██║  ██║██╔══██╗████╗ ████║
+███████╗   ██║   ███████║   ██║   ███████║███████║██╔████╔██║
+╚════██║   ██║   ██╔══██║   ██║   ██╔══██║██╔══██║██║╚██╔╝██║
+███████║   ██║   ██║  ██║   ██║   ██║  ██║██║  ██║██║ ╚═╝ ██║
+╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
+      </pre>
+    </div>
+
+    <!-- JSON Input -->
+    <div id="jsonContainer">
+      <textarea id="jsonInput" placeholder="Paste JSON data here..."></textarea>
+      <br />
+      <button onclick="generateTable()">Generate Table from JSON</button>
+      <button onclick="generateJson()" id="jsonFromTableButton" class="hidden">
+        Generate JSON from Table
+      </button>
+    </div>
+
+    <!-- Table Output -->
+    <div id="tableOutput" class="hidden"></div>
+
+    <!-- JS -->
+    <script>
+      let activeForm = null;
+
+      function generateTable() {
+        const jsonInput = document.getElementById("jsonInput");
+        const tableOutput = document.getElementById("tableOutput");
+        const jsonFromTableButton = document.getElementById(
+          "jsonFromTableButton"
+        );
+        let jsonData;
+
+        try {
+          jsonData = JSON.parse(jsonInput.value);
+        } catch (err) {
+          alert("Invalid JSON format");
+          return;
+        }
+
+        if (Array.isArray(jsonData)) {
+          const keys = Object.keys(jsonData[0]);
+          let tableHtml = "<table><thead><tr>";
+
+          for (let key of keys) {
+            tableHtml += `<th>${key}</th>`;
+          }
+
+          tableHtml += "</tr></thead><tbody>";
+
+          for (let item of jsonData) {
+            tableHtml += "<tr>";
+            for (let key of keys) {
+              tableHtml += `<td onclick="editField(this, '${key}')">${item[key]}</td>`;
+            }
+            tableHtml += "</tr>";
+          }
+
+          tableHtml += "</tbody></table>";
+
+          tableOutput.innerHTML = tableHtml;
+          tableOutput.classList.remove("hidden");
+
+          // Display the 'Generate JSON from Table' button
+          jsonFromTableButton.classList.remove("hidden");
+        } else {
+          alert("JSON data should be an array of objects");
+        }
+      }
+
+      function editField(tdElement, key) {
+        if (activeForm) {
+          activeForm.remove();
+        }
+
+        const originalContent = tdElement.textContent;
+        tdElement.innerHTML = `<input type="text" value="${originalContent}">`;
+        const inputField = tdElement.querySelector("input");
+        inputField.focus();
+
+        inputField.addEventListener("blur", function () {
+          tdElement.textContent = this.value;
+          activeForm = null;
+        });
+
+        inputField.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            tdElement.textContent = this.value;
+            activeForm = null;
+          }
+        });
+
+        activeForm = inputField;
+      }
+      function generateJson() {
+        const table = document.querySelector("#tableOutput table");
+        const jsonOutput = [];
+
+        for (let i = 1; i < table.rows.length; i++) {
+          // Start from 1 to avoid the headers
+          const row = table.rows[i];
+          const rowData = {};
+          for (let j = 0; j < row.cells.length; j++) {
+            const cell = row.cells[j];
+            const header = table.rows[0].cells[j].textContent;
+            rowData[header] = cell.textContent;
+          }
+          jsonOutput.push(rowData);
+        }
+
+        document.getElementById("jsonInput").value = JSON.stringify(
+          jsonOutput,
+          null,
+          2
+        );
+      }
+    </script>
+    <footer
+      style="
+        background-color: #2e3440;
+        color: #eceff4;
+        padding: 20px;
+        margin-top: 20px;
+        text-align: center;
+      "
+    >
+      <div style="font-size: 50px">&#x1F12F;</div>
+      <p>&#x1F12F; Copyleft dotMavriQ 2023</p>
+      <small style="font-size: 12px; line-height: 1.5">
+        Manual indexation, like smoking, may have its own set of hazards.
+        Overexposure to repetitive data entry can lead to eye strain, wrist
+        discomfort, or mind-numbing boredom.<br /><br />
+        Now, while no one's saying you'll get a "keyboard-induced cough" or that
+        your computer will start emitting harmful second-hand data, we still
+        think it's a good idea to take breaks, stretch, and remember that
+        moderation is key.<br /><br />
+        Just as you wouldn't chain-smoke an entire pack of cigarettes, don't
+        chain-enter data for hours on end. Always practice safe data entry.
+      </small>
+    </footer>
+  </body>
+</html>
