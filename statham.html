@@ -163,29 +163,33 @@
       }
 
       function editField(tdElement, key) {
+        // Check if there's an active form and if so, revert its content.
         if (activeForm) {
-          activeForm.remove();
+          activeForm.parentElement.textContent = activeForm.originalContent;
         }
 
         const originalContent = tdElement.textContent;
         tdElement.innerHTML = `<input type="text" value="${originalContent}">`;
         const inputField = tdElement.querySelector("input");
+        inputField.originalContent = originalContent; // Store the original content.
         inputField.focus();
 
         inputField.addEventListener("blur", function () {
-          tdElement.textContent = this.value;
+          // Check for empty value and revert to original content if needed.
+          tdElement.textContent = this.value || this.originalContent;
           activeForm = null;
         });
 
         inputField.addEventListener("keydown", function (event) {
           if (event.key === "Enter") {
-            tdElement.textContent = this.value;
+            tdElement.textContent = this.value || this.originalContent;
             activeForm = null;
           }
         });
 
         activeForm = inputField;
       }
+
       function generateJson() {
         const table = document.querySelector("#tableOutput table");
         const jsonOutput = [];
