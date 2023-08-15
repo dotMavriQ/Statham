@@ -23,7 +23,7 @@ JSON to Table interactive editor
             "Hand-to-hand combat"
         ],
         "description": "Frank Martin, a professional courier driver for hire.",
-        "ttverified": true
+        "verified": true
     },
     {
         "dataset": "jsonstatham",
@@ -46,7 +46,7 @@ JSON to Table interactive editor
             "Resilience"
         ],
         "description": "Chev Chelios, a hitman who learns he has been poisoned and must keep his adrenaline flowing to stay alive.",
-        "ttverified": false
+        "verified": false
     }
 ]
 
